@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Información Militar - Zonas y Distritos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #2c5e1a;
+            --secondary-color: #4a8c2c;
+            --accent-color: #ff914d;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            background-color: #f0f7ed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--dark-color);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-weight: 700;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 180px;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background: white;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+        
+        .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        .card-text {
+            color: #555;
+            font-size: 0.9rem;
+        }
+        
+        .card-icon {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .select-container {
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        
+        .form-select {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(44, 94, 26, 0.25);
+        }
+        
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .modal-title {
+            font-weight: 600;
+        }
+        
+        .modal-body p {
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-body p strong {
+            color: var(--primary-color);
+            min-width: 120px;
+            display: inline-block;
+        }
+        
+        #map {
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            border: 1px solid #ddd;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .card {
+                height: auto;
+                min-height: 150px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        .footer{
+            flex: -1;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="header">
+        <div class="container">
+            <div class="text-center">
+                <h1><i class="bi bi-shield-check"></i> ZONAS Y DISTRITOS MILITARES</h1>
+                <p class="lead mt-2">Información detallada de las zonas militares en Colombia</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="select-container">
+            <label for="slDatos" class="form-label fw-bold">Seleccione una zona militar:</label>
+            <select class="form-select" id="slDatos">
+                <option value="" disabled selected>Cargando zonas...</option>
+            </select>
+        </div>
+
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando información militar...</p>
+        </div>
+
+        <div class="no-results" id="noResults">
+            <i class="bi bi-exclamation-circle" style="font-size: 2rem; color: var(--accent-color);"></i>
+            <h4 class="mt-2">No se encontraron resultados</h4>
+            <p>Seleccione una zona militar para ver la información disponible</p>
+        </div>
+
+        <div id="card-container" class="row g-4"></div>
+    </main>
+
+    <!-- Modal de Detalles -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-info-circle"></i> Detalles de la Zona Militar</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-shield"></i> Zona:</strong> <span id="modal-zona"></span></p>
+                            <p><strong><i class="bi bi-shield-lock"></i> Zona DIM:</strong> <span id="modal-zona-dim"></span></p>
+                            <p><strong><i class="bi bi-geo-alt"></i> Dirección:</strong> <span id="modal-direccion"></span></p>
+                            <p><strong><i class="bi bi-building"></i> Ciudad:</strong> <span id="modal-ciudad"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-telephone"></i> Teléfono:</strong> <span id="modal-telefono"></span></p>
+                            <p><strong><i class="bi bi-envelope"></i> Correo:</strong> <span id="modal-correo"></span></p>
+                            <p><strong><i class="bi bi-globe-americas"></i> Latitud:</strong> <span id="modal-latitude"></span></p>
+                            <p><strong><i class="bi bi-globe-americas"></i> Longitud:</strong> <span id="modal-longitude"></span></p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <h6 class="fw-bold"><i class="bi bi-map"></i> Ubicación en el mapa:</h6>
+                        <div id="map" style="height: 350px;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5 ">
+        <div class="container text-center">
+            <p class="footer mb-0 ">© 2023 Información Militar - Todos los derechos reservados</p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="eje-datos.js"></script>
+</body>
+</html>
